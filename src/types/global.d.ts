@@ -16,10 +16,27 @@ interface SaveFilePickerOptions {
   }>;
 }
 
+interface DirectoryPickerOptions {
+  id?: string;
+  mode?: "read" | "readwrite";
+}
+
 declare global {
+  interface File {
+    webkitGetAsEntry(): FileSystemEntry | null;
+  }
+  
+  interface FileSystemEntry {
+    isFile: boolean;
+    isDirectory: boolean;
+    name: string;
+    fullPath?: string;
+  }
+
   interface Window {
     showOpenFilePicker(options?: FilePickerOptions): Promise<FileSystemFileHandle[]>;
     showSaveFilePicker(options?: SaveFilePickerOptions): Promise<FileSystemFileHandle>;
+    showDirectoryPicker(options?: DirectoryPickerOptions): Promise<any>;
   }
 }
 

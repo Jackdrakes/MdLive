@@ -42,14 +42,22 @@ export interface PreviewPanelProps {
 
 export interface ToolbarProps {
   onOpen: () => void;
+  onOpenFolder: () => void;
+  onOpenRecentFolder: (name: string) => void;
+  onOpenRecentFile: (item: { name: string; path: string }) => void;
   onSave: () => void;
   onSaveAs: () => void;
   onExport: (type: "html" | "pdf") => void;
   fileName: string | null;
+  folderName: string | null;
   isSaved: boolean;
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
   hasOriginal: boolean;
+  showFileTree: boolean;
+  onToggleFileTree: () => void;
+  recentFolders: { name: string; timestamp: number }[];
+  recentFiles: { name: string; path: string; timestamp: number }[];
 }
 
 export interface StatusBarProps {
@@ -58,9 +66,10 @@ export interface StatusBarProps {
   wordCount: number;
   charCount: number;
   hasChanges: boolean;
+  isLoading?: boolean;
 }
 
 export interface DropZoneProps {
   isDragging: boolean;
-  onDrop: (files: FileList) => void;
+  onDrop: (files: FileList, items?: DataTransferItem[]) => void;
 }

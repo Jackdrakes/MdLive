@@ -154,10 +154,12 @@ export function useFileSystem() {
   return {
     fileHandle,
     fileName,
+    setFileName,
     content,
     originalContent,
     isSaved,
     isLoading,
+    setIsLoading,
     error,
     openFile,
     saveFile,

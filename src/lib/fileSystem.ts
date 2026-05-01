@@ -157,3 +157,204 @@ export function isMarkdownFile(file: File): boolean {
   const fileName = file.name.toLowerCase();
   return validExtensions.some((ext) => fileName.endsWith(ext));
 }
+
+export interface FileNode {
+  name: string;
+  path: string;
+  isFolder: boolean;
+  children?: FileNode[];
+  handle?: FileSystemFileHandle | FileSystemDirectoryHandle;
+}
+
+export async function openFolder(): Promise<{
+  handle: any;
+  name: string;
+} | null> {
+  if (!isFileSystemSupported()) {
+    throw new Error("File System Access API not supported in this browser");
+  }
+
+  try {
+    const handle = await window.showDirectoryPicker({
+      mode: "readwrite",
+    });
+    return {
+      handle,
+      name: handle.name,
+    };
+  } catch (err) {
+    const error = err as Error;
+    if (error.name === "AbortError") {
+      return null;
+    }
+    throw error;
+  }
+}
+
+export async function readDirectory(
+  handle: any,
+  basePath: string = ""
+): Promise<FileNode[]> {
+  const entries: FileNode[] = [];
+  const validExtensions = [".md", ".markdown"];
+
+  try {
+    for await (const entry of handle.values()) {
+      const entryPath = basePath ? `${basePath}/${entry.name}` : entry.name;
+
+      if (entry.kind === "directory") {
+        const children = await readDirectory(entry, entryPath);
+        if (children.length > 0) {
+          entries.push({
+            name: entry.name,
+            path: entryPath,
+            isFolder: true,
+            children,
+            handle: entry,
+          });
+        }
+      } else if (entry.kind === "file") {
+        const ext = entry.name.toLowerCase().split(".").pop();
+        if (ext && validExtensions.includes(`.${ext}`)) {
+          entries.push({
+            name: entry.name,
+            path: entryPath,
+            isFolder: false,
+            handle: entry,
+          });
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Error reading directory:", err);
+  }
+
+  return entries.sort((a, b) => {
+    if (a.isFolder && !b.isFolder) return -1;
+    if (!a.isFolder && b.isFolder) return 1;
+    return a.name.localeCompare(b.name);
+  });
+}
+
+export async function readFileFromHandle(handle: FileSystemFileHandle): Promise<string> {
+  const file = await handle.getFile();
+  return await file.text();
+}
+
+interface DroppedEntry {
+  name: string;
+  isFolder: boolean;
+}
+
+export async function readDroppedDirectory(
+  file: File,
+  basePath: string = ""
+): Promise<FileNode[]> {
+  const entry = (file as any).webkitGetAsEntry?.();
+  if (!entry || !entry.isDirectory) return [];
+  return readDroppedDirectoryFromEntry(entry, basePath);
+}
+
+export async function readFileFromDroppedEntry(entry: any): Promise<string> {
+  return new Promise((resolve, reject) => {
+    entry.file((file: File) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error("Failed to read file"));
+      reader.readAsText(file);
+    }, (err: any) => reject(err));
+  });
+}
+
+export async function readDroppedDirectoryFromEntry(
+  entry: any,
+  basePath: string = ""
+): Promise<FileNode[]> {
+  const entries: FileNode[] = [];
+  const validExtensions = [".md", ".markdown"];
+
+  if (!entry.isDirectory) return [];
+
+  const reader = entry.createReader();
+
+  const readAllEntries = async (): Promise<any[]> => {
+    return new Promise((resolve) => {
+      const allEntries: any[] = [];
+      
+      const readNext = () => {
+        reader.readEntries((results: any[]) => {
+          if (results.length === 0) {
+            resolve(allEntries);
+          } else {
+            allEntries.push(...results);
+            readNext();
+          }
+        });
+      };
+      
+      readNext();
+    });
+  };
+
+  try {
+    const allEntries = await readAllEntries();
+    
+    for (const e of allEntries) {
+      const entryPath = basePath ? `${basePath}/${e.name}` : e.name;
+      
+      if (e.isDirectory) {
+        const dirReader = e.createReader();
+        
+        const readChildEntries = (): Promise<any[]> => {
+          return new Promise((resolve) => {
+            dirReader.readEntries((results: any[]) => resolve(results));
+          });
+        };
+        
+        const childEntries = await readChildEntries();
+        
+        const validChildren: FileNode[] = [];
+        for (const child of childEntries) {
+          if (!child.isDirectory) {
+            const ext = child.name.toLowerCase().split(".").pop();
+            if (ext && validExtensions.includes(`.${ext}`)) {
+              validChildren.push({
+                name: child.name,
+                path: `${entryPath}/${child.name}`,
+                isFolder: false,
+                handle: child,
+              });
+            }
+          }
+        }
+        
+        if (validChildren.length > 0) {
+          entries.push({
+            name: e.name,
+            path: entryPath,
+            isFolder: true,
+            children: validChildren.sort((a, b) => a.name.localeCompare(b.name)),
+          });
+        }
+      } else {
+        const ext = e.name.toLowerCase().split(".").pop();
+        if (ext && validExtensions.includes(`.${ext}`)) {
+          entries.push({
+            name: e.name,
+            path: entryPath,
+            isFolder: false,
+            handle: e,
+          });
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Error reading dropped directory:", err);
+  }
+
+  return entries.sort((a, b) => {
+    if (a.isFolder && !b.isFolder) return -1;
+    if (!a.isFolder && b.isFolder) return 1;
+    return a.name.localeCompare(b.name);
+  });
+}
