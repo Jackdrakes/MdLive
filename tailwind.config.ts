@@ -4,29 +4,29 @@ const config: Config = {
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/app/**/*.{js,ts,tsx,mdx}",
   ],
   theme: {
     extend: {
       colors: {
         background: {
-          primary: "#0f172a",
-          secondary: "#1e293b",
-          tertiary: "#334155",
+          primary: "#1e1e1e",
+          secondary: "#242424",
+          tertiary: "#2a2a2a",
         },
         text: {
-          primary: "#f1f5f9",
-          secondary: "#94a3b8",
+          primary: "#dadada",
+          secondary: "#999999",
         },
         border: {
-          DEFAULT: "#475569",
+          DEFAULT: "#3f3f3f",
         },
         accent: {
-          DEFAULT: "#3b82f6",
+          DEFAULT: "#7ea9f9",
         },
-        success: "#22c55e",
-        warning: "#f59e0b",
-        error: "#ef4444",
+        success: "#44cf6e",
+        warning: "#e9973f",
+        error: "#fb464c",
       },
     },
   },

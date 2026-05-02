@@ -38,6 +38,7 @@ export interface EditorPanelProps {
 
 export interface PreviewPanelProps {
   markdown: string;
+  onCheckChange?: (lineIndex: number, checked: boolean) => void;
 }
 
 export interface ToolbarProps {

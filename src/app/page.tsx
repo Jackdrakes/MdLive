@@ -419,6 +419,21 @@ export default function Home() {
     return count;
   };
 
+  const handleCheckChange = useCallback((lineIndex: number, checked: boolean) => {
+    const lines = content.split("\n");
+    
+    if (lineIndex >= 0 && lineIndex < lines.length) {
+      const regex = /^(\s*-\s*\[)[ x](\]\s*)/;
+      const match = lines[lineIndex].match(regex);
+      
+      if (match) {
+        const newCheckbox = checked ? "x" : " ";
+        lines[lineIndex] = lines[lineIndex].replace(regex, `$1${newCheckbox}$2`);
+        loadContent(lines.join("\n"));
+      }
+    }
+  }, [content, loadContent]);
+
   const handleFileSelect = useCallback(async (node: FileNode) => {
     if (node.isFolder || !node.handle) return;
     
@@ -504,7 +519,7 @@ export default function Home() {
         )}
         {(viewMode === "split" || viewMode === "preview") && (
           <div className={`h-full ${viewMode === "split" ? "w-1/2" : "w-full"}`}>
-            <PreviewPanel markdown={content} />
+            <PreviewPanel markdown={content} onCheckChange={handleCheckChange} />
           </div>
         )}
       </>
