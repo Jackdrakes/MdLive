@@ -34,11 +34,14 @@ export interface EditorPanelProps {
   value: string;
   onChange: (value: string) => void;
   onSave?: () => void;
+  scrollToLine?: () => number | undefined;
 }
 
 export interface PreviewPanelProps {
   markdown: string;
   onCheckChange?: (lineIndex: number, checked: boolean) => void;
+  onNavigateToLine?: (lineIndex: number) => void;
+  isSplitMode?: boolean;
 }
 
 export interface ToolbarProps {

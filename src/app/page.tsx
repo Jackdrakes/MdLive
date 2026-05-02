@@ -499,6 +499,19 @@ export default function Home() {
   const hasChanges = originalContent !== null && content !== originalContent;
   const hasOriginal = originalContent !== null;
 
+  const [scrollTargetLine, setScrollTargetLine] = useState<number | undefined>(undefined);
+
+  const handleNavigateToLine = useCallback((lineIndex: number) => {
+    console.log("handleNavigateToLine called", lineIndex);
+    setScrollTargetLine(lineIndex + 1);
+  }, []);
+
+  const scrollToLine = useCallback(() => {
+    const line = scrollTargetLine;
+    setScrollTargetLine(undefined);
+    return line;
+  }, [scrollTargetLine]);
+
   const renderContent = () => {
     if (viewMode === "diff" && originalContent) {
       return (
@@ -514,12 +527,18 @@ export default function Home() {
               value={content}
               onChange={handleEditorChange}
               onSave={saveFile}
+              scrollToLine={scrollToLine}
             />
           </div>
         )}
         {(viewMode === "split" || viewMode === "preview") && (
           <div className={`h-full ${viewMode === "split" ? "w-1/2" : "w-full"}`}>
-            <PreviewPanel markdown={content} onCheckChange={handleCheckChange} />
+            <PreviewPanel 
+              markdown={content} 
+              onCheckChange={handleCheckChange} 
+              onNavigateToLine={handleNavigateToLine}
+              isSplitMode={viewMode === "split"}
+            />
           </div>
         )}
       </>

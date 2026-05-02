@@ -5,10 +5,31 @@ import { markdown } from "@codemirror/lang-markdown";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { EditorView, keymap } from "@codemirror/view";
 import { EditorPanelProps } from "@/types";
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useEffect, useState } from "react";
 
-export function EditorPanel({ value, onChange, onSave }: EditorPanelProps) {
+export function EditorPanel({ value, onChange, onSave, scrollToLine }: EditorPanelProps) {
   const editorRef = useRef<EditorView | null>(null);
+  const scrollTriggerRef = useRef(0);
+
+  const triggerScroll = useCallback(() => {
+    const lineNumber = scrollToLine?.();
+    console.log("triggerScroll called, lineNumber:", lineNumber);
+    if (lineNumber && editorRef.current) {
+      const doc = editorRef.current.state.doc;
+      console.log("editor doc lines:", doc.lines);
+      if (lineNumber >= 1 && lineNumber <= doc.lines) {
+        const line = doc.line(lineNumber);
+        console.log("Scrolling to line", lineNumber, "position", line.from);
+        editorRef.current.dispatch({
+          effects: EditorView.scrollIntoView(line.from, { y: "center" }),
+        });
+      }
+    }
+  }, [scrollToLine]);
+
+  useEffect(() => {
+    triggerScroll();
+  }, [triggerScroll]);
 
   const handleSave = useCallback(() => {
     onSave?.();
